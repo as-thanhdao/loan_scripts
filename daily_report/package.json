@@ -1,0 +1,10 @@
+{
+  "name": "daily-report",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "googleapis": "^144.0.0",
+    "node-schedule": "^2.1.1"
+  }
+}
