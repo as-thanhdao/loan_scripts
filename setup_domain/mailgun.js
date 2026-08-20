@@ -223,7 +223,7 @@ async function main() {
   const sendingSystem = 'charon';
   const zoneId = '87af77850e4d256685b35f1de237429a';
   const mailgunUsername = 'as@mg.locomail.co.uk';
-  const mailgunPassword = 'b85a3c93eba7f147be96f4b340387549-d3a6f780-9cb6f314';
+  const mailgunPassword = '';
 
   try {
     configureSystem(sendingSystem);
