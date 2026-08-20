@@ -15,10 +15,10 @@ CONTACT_ID = '567605'
 
 
 def create_domain():
-    sending_domain = 'marchionews.com'
-    sending_domain_id = 'e40a688e60db6a659433e87f84863016'
+    sending_domain = 'marcavinculo.com'
+    sending_domain_id = '3719a05ff349bfc68f30606566865f39'
     sending_system = 'Charon'
-    geo = 'IT'
+    geo = 'ES'
     user = 'loan.nguyen@audienceserv.com'
     click_ip = '45.81.231.2'
     model_throttling_id = '4'

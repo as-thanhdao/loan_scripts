@@ -85,10 +85,10 @@ def set_up_domain(
 
 def main():
     set_up_domain(
-        sending_domain="patrimoinechic.fr",
+        sending_domain="marcavinculo.com",
         sending_system="Charon",
-        ip_list=["45.81.231.208", "185.236.128.29", "193.107.78.82", "45.81.231.11", "45.81.231.153"],
-        geo="FR",
+        ip_list=["77.247.193.28", "77.247.193.215"],
+        geo="ES",
         user="loan.nguyen@audienceserv.com",
         model_throttling_id=4,
         token=os.environ["UNIVERSE_TOKEN"],

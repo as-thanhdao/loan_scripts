@@ -194,24 +194,24 @@ function createDnsRecord(zoneId, record) {
 async function setUpDomain(domain, zoneId, mailgunUsername, mailgunPassword) {
   log.info("=== Mailgun domain setup: %s ===", domain);
 
-  // const domainId = await createIncomingDomain(domain);
-  // await createForwardMailboxes(domainId);
-  // await createSpamMailboxes(domainId);
-  // await createBounceMailbox(domainId);
+  const domainId = await createIncomingDomain(domain);
+  await createForwardMailboxes(domainId);
+  await createSpamMailboxes(domainId);
+  await createBounceMailbox(domainId);
 
-  // const clickSubDomain = `click.${domain}`;
-  // await createClickUrl(clickSubDomain);
+  const clickSubDomain = `click.${domain}`;
+  await createClickUrl(clickSubDomain);
 
-  // log.info("Adding click record...");
-  // await createDnsRecord(zoneId, { name: clickSubDomain, type: "A", content: CLICK_IP });
+  log.info("Adding click record...");
+  await createDnsRecord(zoneId, { name: clickSubDomain, type: "A", content: CLICK_IP });
 
-  // log.info("Adding default records (mail, dmarc, mx)...");
-  // await createDnsRecord(zoneId, { name: `mail.${domain}`, type: "A", content: MAIL_IP });
-  // await createDnsRecord(zoneId, { name: domain, type: "MX", content: `mail.${domain}`, priority: 10 });
+  log.info("Adding default records (mail, dmarc, mx)...");
+  await createDnsRecord(zoneId, { name: `mail.${domain}`, type: "A", content: MAIL_IP });
+  await createDnsRecord(zoneId, { name: domain, type: "MX", content: `mail.${domain}`, priority: 10 });
 
   await createMailgunRelay(domain, mailgunUsername, mailgunPassword);
 
-  log.info("=== Done: %s is set up in Pluto ===", domain);
+  log.info("=== Done: %s is set up ===", domain);
 }
 
 // ============================================================
@@ -219,11 +219,11 @@ async function setUpDomain(domain, zoneId, mailgunUsername, mailgunPassword) {
 // ============================================================
 
 async function main() {
-  const domain = 'zustellzugang.de';
-  const sendingSystem = 'pluto';
-  const zoneId = '87a0e7f6a2381a1a9542a455988b18a0';
-  const mailgunUsername = 'as@mg.zustellzugang.de';
-  const mailgunPassword = '505315bfa65c669506a45b2a95ffeb39-994959c8-69d6194f';
+  const domain = 'locomail.co.uk';
+  const sendingSystem = 'charon';
+  const zoneId = '87af77850e4d256685b35f1de237429a';
+  const mailgunUsername = 'as@mg.locomail.co.uk';
+  const mailgunPassword = 'b85a3c93eba7f147be96f4b340387549-d3a6f780-9cb6f314';
 
   try {
     configureSystem(sendingSystem);
