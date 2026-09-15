@@ -9,6 +9,7 @@ load_dotenv()
 from models import IPAddress, Domain
 from services import select_system
 from exceptions import ExternalError
+from utils import build_parser, parse_args
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -44,11 +45,14 @@ def add_ips(
 
 
 def main():
+    parser = build_parser('Add sending IPs to a domain that is already set up', ips='required')
+    args = parse_args(parser)
+
     add_ips(
-        domain="navegamail.es",
-        ip_list=["45.81.231.158"],
-        host_system="Charon",
-        user="loan.nguyen@audienceserv.com",
+        domain=args.domain,
+        ip_list=args.ips,
+        host_system=args.system,
+        user=args.user,
         token=os.environ["UNIVERSE_TOKEN"],
     )
 

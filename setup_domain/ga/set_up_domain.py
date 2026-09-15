@@ -9,6 +9,7 @@ load_dotenv()
 from models import Domain, IPAddress
 from services import select_system
 from exceptions import ExternalError
+from utils import build_parser, parse_args
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -84,13 +85,18 @@ def set_up_domain(
 
 
 def main():
+    parser = build_parser('Set up an existing UNUSED domain: DNS records, click host and sending IPs')
+    parser.add_argument('--geo', required=True, help='geo code, e.g. ES')
+    parser.add_argument('--throttling-id', default='4', help='model throttling id (default: 4)')
+    args = parse_args(parser)
+
     set_up_domain(
-        sending_domain="marcavinculo.com",
-        sending_system="Charon",
-        ip_list=["77.247.193.28", "77.247.193.215"],
-        geo="ES",
-        user="loan.nguyen@audienceserv.com",
-        model_throttling_id=4,
+        sending_domain=args.domain,
+        sending_system=args.system,
+        ip_list=args.ips,
+        geo=args.geo,
+        user=args.user,
+        model_throttling_id=args.throttling_id,
         token=os.environ["UNIVERSE_TOKEN"],
     )
 
