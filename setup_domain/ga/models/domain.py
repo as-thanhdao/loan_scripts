@@ -62,13 +62,13 @@ class Domain(Model):
     updated_at = UTCDateTimeAttribute(null=False)
     last_modified_by = UnicodeAttribute(null=True)
 
-    def save(self, conditional_operator=None, **expected_values):
+    def save(self, condition=None, conditional_operator=None, **expected_values):
         self.service = os.getenv('SERVICE')
         self.updated_at = dt.datetime.now()
         self.PK = 'SENDING_DOMAIN'
         self.type = self.PK
         self.sending_domain = self.SK
-        super(Domain, self).save()
+        super(Domain, self).save(condition=condition)
 
     def update(self, **expected_values):
         actions = expected_values['actions']

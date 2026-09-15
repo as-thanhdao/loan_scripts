@@ -8,6 +8,7 @@ load_dotenv()
 
 from models import Domain
 from services import select_system
+from utils import build_parser, parse_args
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -40,11 +41,14 @@ def deactivate_ips(
 
 
 def main():
+    parser = build_parser('Deactivate sending IPs on a domain', ips='required')
+    args = parse_args(parser)
+
     deactivate_ips(
-        domain="noticiasdirectas.com",
-        ip_list=["45.81.231.158"],
-        host_system="Charon",
-        user="loan.nguyen@audienceserv.com",
+        domain=args.domain,
+        ip_list=args.ips,
+        host_system=args.system,
+        user=args.user,
         token=os.environ["UNIVERSE_TOKEN"],
     )
 

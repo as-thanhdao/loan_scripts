@@ -1,27 +1,27 @@
-import json
 import os
 
 from .set_up_class import SetUpClass
 
-CREDS_FILE = os.path.join(os.path.dirname(__file__), '..', 'credentials.json')
+SYSTEM_HOSTS = {'Pluto': 'plutomailsystem', 'Charon': 'charonmail'}
+
+
+def _require(name):
+    try:
+        return os.environ[name]
+    except KeyError:
+        raise SystemExit(f'{name} is missing from .env')
 
 
 def select_system(sending_system):
-    with open(CREDS_FILE) as file:
-        creds_dict = json.loads(file.read())
-        pluto_cred = tuple(creds_dict['pluto_cred'])
-        charon_cred = tuple(creds_dict['charon_cred'])
-        inwx_username = creds_dict['inwx_cred']['username']
-        inwx_password = creds_dict['inwx_cred']['password']
-        aws_access_key_id = creds_dict['aws_cred_karma']['aws_access_key_id']
-        aws_secret_access_key = creds_dict['aws_cred_karma']['aws_secret_access_key']
+    if sending_system not in SYSTEM_HOSTS:
+        raise SystemExit(f'Unknown sending system: {sending_system}')
 
-    if sending_system == 'Pluto':
-        return SetUpClass(pluto_cred, 'plutomailsystem',
-                          inwx_username, inwx_password,
-                          aws_access_key_id, aws_secret_access_key)
+    system_cred = (_require(f'{sending_system.upper()}_USERNAME'),
+                   _require(f'{sending_system.upper()}_PASSWORD'))
 
-    if sending_system == 'Charon':
-        return SetUpClass(charon_cred, 'charonmail',
-                          inwx_username, inwx_password,
-                          aws_access_key_id, aws_secret_access_key)
+    # Route53 runs on the karma account, which is not the one PynamoDB picks up
+    # from the boto3 chain for DynamoDB -- keep the two sets of keys apart.
+    return SetUpClass(system_cred, SYSTEM_HOSTS[sending_system],
+                      _require('INWX_USERNAME'), _require('INWX_PASSWORD'),
+                      _require('KARMA_AWS_ACCESS_KEY_ID'),
+                      _require('KARMA_AWS_SECRET_ACCESS_KEY'))
