@@ -1,31 +1,36 @@
 "use strict";
 
-const fs = require("fs");
 const path = require("path");
+const { parseArgs } = require("node:util");
 
 // ============================================================
 // CONFIGURATION
 // ============================================================
 
-const { pluto_cred, charon_cred } = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "ga", "credentials.json"), "utf8")
-);
 process.loadEnvFile(path.join(__dirname, "ga", ".env"));
 
 const SYSTEMS = {
   pluto: {
     host: "plutomailsystem",
-    cred: pluto_cred,
+    envPrefix: "PLUTO",
     mailIp: "193.107.76.1",
     clickIp: "193.107.76.2",
   },
   charon: {
     host: "charonmail",
-    cred: charon_cred,
+    envPrefix: "CHARON",
     mailIp: "45.81.231.1",
     clickIp: "45.81.231.2",
   },
 };
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is missing from ga/.env`);
+  }
+  return value;
+}
 
 // Set by configureSystem() once the sending_system argument is known.
 let BASE_URL;
@@ -36,9 +41,10 @@ let MAIL_IP;
 function configureSystem(sendingSystem) {
   const system = SYSTEMS[sendingSystem];
   if (!system) {
-    throw new Error(`Unknown sending_system "${sendingSystem}" — expected "Pluto" or "Charon"`);
+    throw new Error(`Unknown --system "${sendingSystem}" — expected ${Object.keys(SYSTEMS).join(" or ")}`);
   }
-  const [user, pass] = system.cred;
+  const user = requireEnv(`${system.envPrefix}_USERNAME`);
+  const pass = requireEnv(`${system.envPrefix}_PASSWORD`);
   BASE_URL = `https://${system.host}.com/ga/api/v3/eng`;
   GA_AUTH = "Basic " + Buffer.from(`${user}:${pass}`).toString("base64");
   CLICK_IP = system.clickIp;
@@ -46,7 +52,7 @@ function configureSystem(sendingSystem) {
 }
 
 const CLOUDFLARE_URL = "https://api.cloudflare.com/client/v4";
-const CLOUDFLARE_TOKEN = process.env.CLOUDFLARE_TOKEN;
+const CLOUDFLARE_TOKEN = requireEnv("CLOUDFLARE_TOKEN");
 
 const FORWARD_MAILBOXES = [
   { local: "dmarc_reports", forward_to: "dmarc_reports@audienceserv.com" },
@@ -203,15 +209,58 @@ async function setUpDomain(domain, subDomain, zoneId) {
 // ENTRY POINT
 // ============================================================
 
+const USAGE = `Usage: node infobip.js --domain <domain> [options]
+
+  --domain      <domain>   sending domain, e.g. example.com       (required)
+  --system      <name>     ${Object.keys(SYSTEMS).join(" | ")}    (default: charon)
+  --sub-domain  <domain>   default: email.<domain>
+  --zone-id     <id>       Cloudflare zone id; looked up from --domain when omitted
+  --help                   show this message`;
+
+function parseCliArgs() {
+  const { values } = parseArgs({
+    options: {
+      domain: { type: "string" },
+      system: { type: "string", default: "charon" },
+      "sub-domain": { type: "string" },
+      "zone-id": { type: "string" },
+      help: { type: "boolean", default: false },
+    },
+  });
+
+  if (values.help) {
+    console.log(USAGE);
+    process.exit(0);
+  }
+  if (!values.domain) {
+    console.error("error: --domain is required\n\n" + USAGE);
+    process.exit(1);
+  }
+
+  const system = values.system.toLowerCase();
+  if (!SYSTEMS[system]) {
+    console.error(`error: unknown --system "${values.system}" — expected ${Object.keys(SYSTEMS).join(" or ")}`);
+    process.exit(1);
+  }
+
+  return {
+    domain: values.domain,
+    system,
+    subDomain: values["sub-domain"] ?? `email.${values.domain}`,
+    zoneId: values["zone-id"],
+  };
+}
+
 async function main() {
-  const domain = 'reponsesutiles.fr';
-  const subDomain = 'email.reponsesutiles.fr';
-  const sendingSystem = 'charon';
-  const zoneId = '8464c92d057211155100ba52788f8461';
+  const { domain, system, subDomain, zoneId } = parseCliArgs();
 
   try {
-    configureSystem(sendingSystem);
-    await setUpDomain(domain, subDomain, zoneId);
+    configureSystem(system);
+    // Looking the zone up beats passing it by hand: the Cloudflare account id
+    // is the same shape and gets mistaken for it.
+    const zone = zoneId ?? (await getZoneId(domain));
+    log.info("Using Cloudflare zone %s for %s", zone, domain);
+    await setUpDomain(domain, subDomain, zone);
   } catch (err) {
     log.error("%s setup failed: %s", domain, err.message);
     process.exit(1);

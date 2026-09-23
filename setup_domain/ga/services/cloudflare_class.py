@@ -68,21 +68,21 @@ class Cloudflare:
         return result
 
     def list_request(self, end_point, params={}):
-        try:
-            has_next_page = True
-            results = []
-            while has_next_page:
-                res = requests.get(f'{self.url}/{end_point}', headers=self.headers, params=params)
-                json_dict = res.json()
-                if json_dict['success']:
-                    results += json_dict['result']
-                    if (json_dict['result_info']['total_pages'] == 0) or (json_dict['result_info']['page'] == json_dict['result_info']['total_pages']):
-                        has_next_page = False
-                else:
-                    logger.error(f'listing {end_point} failed:', json_dict['errors'])
-            return results
-        except Exception as e:
-            raise e
+        results = []
+        page = 1
+        while True:
+            res = requests.get(f'{self.url}/{end_point}', headers=self.headers,
+                               params={**params, 'page': page})
+            json_dict = res.json()
+            if not json_dict['success']:
+                # Without this the loop used to retry the same failing page
+                # forever, hanging the script and hammering Cloudflare.
+                raise Exception(f'listing {end_point} failed:', json_dict['errors'])
+            results += json_dict['result']
+            info = json_dict['result_info']
+            if info['total_pages'] == 0 or info['page'] >= info['total_pages']:
+                return results
+            page += 1
 
     def get_request(self, end_point, id):
         try:
